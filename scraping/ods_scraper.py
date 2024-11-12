@@ -1,6 +1,5 @@
-is not checked
-
-pip install odfpy
+#is not checked
+#pip install odfpy
 
 
 

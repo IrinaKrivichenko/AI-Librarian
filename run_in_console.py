@@ -7,9 +7,9 @@ list_of_path_to_data = [
 rag = RAG(list_of_path_to_data)
 
 while True:
-    question = input("Введите ваш вопрос (или напишите 'конец' для выхода): ")
-    if question.lower() == "конец":
-        print("Программа завершена.")
+    question = input('Enter your question (or type "exit" to exit):')
+    if question.lower() == "exit":
+        print("The program completed execution.")
         break
     answer = rag.get_answer(question)
     print(answer)

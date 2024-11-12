@@ -26,7 +26,7 @@ class QuestionItem(BaseModel):
 @app.post('/ask')
 async def ask_question(question: QuestionItem):
     question = question.text
-    if question.lower() == "конец":
+    if question.lower() == "exit":
         pass
     answer = rag.get_answer(question)
     return {"answer": answer}
