@@ -51,7 +51,7 @@ To run the application in console mode:
 python run_in_console.py
 ```
 
-This will initiate a loop where the system waits for user queries. After providing a question, it retrieves and displays relevant information from the document library. Use the keyword "конец" to terminate the session.
+This will initiate a loop where the system waits for user queries. After providing a question, it retrieves and displays relevant information from the document library. Use the keyword "exit" to terminate the session.
 
 ### Running as a Service
 
