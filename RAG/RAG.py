@@ -1,20 +1,7 @@
 import os
-import sys
-import math
-import faiss
-import numpy as np
-import pandas as pd
-from scipy.spatial import distance
-import logging
-
 from typing import Optional
-from tqdm import tqdm
-from openai import OpenAI, AuthenticationError, OpenAIError
 
 from RAG.DataManager import DataManager
-
-from dotenv import load_dotenv
-
 from RAG.HistoryManager import HistoryManager
 from RAG.LoggerSetup import LoggerSetup
 from RAG.OpenAIHandler import OpenAIHandler

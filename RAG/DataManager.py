@@ -4,7 +4,6 @@ import numpy as np
 import pandas as pd
 from scipy.spatial import distance
 import faiss
-from typing import Optional
 from tqdm import tqdm
 from dotenv import load_dotenv
 from RAG.LoggerSetup import LoggerSetup
