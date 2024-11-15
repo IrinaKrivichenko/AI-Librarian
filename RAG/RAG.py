@@ -33,9 +33,9 @@ class RAG:
                         f"Use the provided chunks delimited by triple quotes to answer question. " \
                         f"Use the provided conversation context delimited by triple quotes to answer question if needed. " \
                         f"If you don't understand a question, don't guess, just ask to specify the answer.' " \
-                        f"если ты считаешь , что в предоставленных чанках был рисунок , который может хорошо " \
-                        "проилюстрировать вопрос пользователя, то добавь к ответу информацию " \
-                        "' для лучшего понимания посмотрите рисунок {pic_name} в файле {file_name} номер чанка {chunk_number}'" \
+                        f"if you think that the provided chunks contained a picture," \
+                        "which can illustrate the user's question well for better understanding," \
+                        "then add to the answer 'look at the picture {pic_name} in the file {file_name} chunk number {chunk_number}'" \
                         f"Provided chunks: '''{context}'''. " \
                         f"Conversation context: '''{history_content}'''. " \
                         f"If the article does not provide the required information, please provide general recommendations or alternative sources upon user request."\
