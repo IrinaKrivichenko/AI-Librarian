@@ -8,5 +8,5 @@ python-dotenv
 scipy==1.6.0
 fastapi
 uvicorn == 0.30.6
-
 tiktoken == 0.5.1
+gradio == 4.44.1
