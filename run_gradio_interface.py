@@ -8,4 +8,4 @@ def chatbot_function(input_text, _):
        response = rag.get_answer(input_text)
        return response
 
-gr.ChatInterface(chatbot_function).launch()
+gr.ChatInterface(chatbot_function).launch(server_name="0.0.0.0", server_port=7860)
