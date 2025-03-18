@@ -2,6 +2,7 @@ import os
 import sys
 import numpy as np
 import pandas as pd
+import boto3
 from scipy.spatial import distance
 import faiss
 from tqdm import tqdm
@@ -15,7 +16,7 @@ class DataManager:
 # Responsible for handling all operations related to data storage and retrieval,
 # including operations on the metadata, content, and embedding databases.
 
-    def __init__(self, num_chunks_sent, path_to_data=None, openai_handler=None, logger=None):
+    def __init__(self, num_chunks_sent, data_bucket=None, openai_handler=None, logger=None):
         self.openai_handler = OpenAIHandler() if openai_handler is None else openai_handler
         self.logger = LoggerSetup() if logger is None else logger
         self.metadata_database = None
@@ -26,23 +27,48 @@ class DataManager:
         self.CHUNKS_OVERLAP = 200
         self.NUM_CHUNKS_SENT = int(os.getenv("NUM_CHUNKS_SENT"))
         self.THRESHOLD_CHUNKS_SENT = float(os.getenv("THRESHOLD_CHUNKS_SENT"))
-        self.load_databases_from_npy(path_to_data)
+        self.load_databases_from_npy(data_bucket)
 
-    def load_databases_from_npy(self, path_to_data: str):
+
+    def clean_up_temporary_files(self):
+        """Удаляет все файлы в папке /tmp."""
+        temp_dir = "/tmp"
         try:
-            metadata_db_path = os.path.join(path_to_data, "metadata.npy")
-            content_db_path = os.path.join(path_to_data, "content.npy")
-            embeddings_db_path = os.path.join(path_to_data, "embedding.npy")
-            # Loading metadata
+            for file_name in os.listdir(temp_dir):
+                file_path = os.path.join(temp_dir, file_name)
+                if os.path.isfile(file_path):  # Удаляем только файлы
+                    os.remove(file_path)
+                    self.logger.info(f"Deleted temporary file: {file_path}")
+        except Exception as e:
+            self.logger.error(f"Error cleaning up /tmp directory: {e}")
+
+    def load_databases_from_npy(self, bucket_name: str):
+        def download_file_from_s3(file_name):
+            """ downloadfile from S3 into tmp folder."""
+            try:
+                temp_file_path = os.path.join("/tmp", file_name)
+                s3_client.download_file(bucket_name, file_name, temp_file_path)
+                return temp_file_path
+            except Exception as e:
+                self.logger.error(f"Error downloading {file_name} from S3: {e}")
+                raise
+
+        try:
+            s3_client = boto3.client('s3')
+            metadata_db_path = download_file_from_s3("metadata.npy")
+            content_db_path = download_file_from_s3("content.npy")
+            embeddings_db_path = download_file_from_s3("embedding.npy")
+
             self.metadata_database = np.load(metadata_db_path)
-            # Loading content
             self.content_database = np.load(content_db_path)
-            # Loading or creating embeddings
             temp_embeddings = np.load(embeddings_db_path)
             self.embeddings_database_np = temp_embeddings
+
+            # Loading or creating embeddings
             for i in range(len(self.embeddings_database_np)):
                 self.embeddings_database.add(np.expand_dims(self.embeddings_database_np[i], axis=0))
-            self.logger.info(f"From {path_to_data} loaded:")
+
+            self.logger.info(f"From S3 loaded:")
             self.logger.info(f"metadata_database.shape is {self.metadata_database.shape}")
             self.logger.info(f"content_database.shape is {self.content_database.shape}")
         except FileNotFoundError as e:
@@ -55,14 +81,37 @@ class DataManager:
             self.metadata_database = None
             self.content_database = None
             self.embeddings_database_np = None
+        finally:
+            # clean tmp folder
+            self.clean_up_temporary_files()
 
-    def save_databases_to_npy(self, save_dir_path: str):
-        # Saving metadata
-        np.save(os.path.join(save_dir_path, "metadata.npy"), self.metadata_database)
-        # Saving content
-        np.save(os.path.join(save_dir_path, "content.npy"), self.content_database)
-        # Saving embeddings if needed
-        np.save(os.path.join(save_dir_path, "embedding.npy"), self.embeddings_database_np)
+    def save_databases_to_npy(self, bucket_name: str):
+        def save_file_to_s3(file_name, data):
+            """ save data into file and load it to S3."""
+            try:
+                temp_file_path = os.path.join("/tmp", file_name)
+                np.save(temp_file_path, data)
+                self.logger.info(f"Temporary file saved: {temp_file_path}")
+
+                s3_client.upload_file(temp_file_path, bucket_name, file_name)
+                self.logger.info(f"File {file_name} uploaded to S3 bucket: {self.bucket_name}")
+            except Exception as e:
+                self.logger.error(f"Error saving {file_name} to S3: {e}")
+                raise
+
+        try:
+            s3_client = boto3.client('s3')
+            save_file_to_s3("metadata.npy", self.metadata_database)
+            save_file_to_s3("content.npy", self.content_database)
+            save_file_to_s3("embedding.npy", self.embeddings_database_np)
+        except Exception as e:
+            self.logger.error(f"Error saving databases to S3 bucket {self.bucket_name}: {e}")
+        finally:
+            # Очистка временной директории
+            self.clean_up_temporary_files()
+
+
+
 
     def add_content_from_df(self, df: pd.DataFrame):
         for index, row in df.iterrows():
