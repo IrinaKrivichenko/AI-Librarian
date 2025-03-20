@@ -5,6 +5,8 @@ list_of_buckets = [ r"database-docx"]
 rag = RAG(list_of_buckets)
 
 def chatbot_function(input_text, _):
+       if input_text == "error":
+              raise Exception()
        response = rag.get_answer(input_text)
        return response
 
